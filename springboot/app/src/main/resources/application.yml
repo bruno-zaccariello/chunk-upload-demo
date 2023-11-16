@@ -1,0 +1,20 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/mydatabase
+    username: myuser
+    password: secret
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    properties:
+      hibernate:
+        default_schema: MYSCHEMA
+
+dist:
+  jar: chunk-upload-manager
+
+server:
+  port: 8080
+
+output:
+  temp: ./output/temp
+  result: ./output/result

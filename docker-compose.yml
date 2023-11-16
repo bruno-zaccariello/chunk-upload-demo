@@ -1,0 +1,50 @@
+volumes:
+  dbdata:
+  pgadmin-data:
+
+services:
+  postgres:
+    image: 'postgres:latest'
+    container_name: chunk-upload-postgres
+    environment:
+      - 'POSTGRES_DB=mydatabase'
+      - 'POSTGRES_PASSWORD=secret'
+      - 'POSTGRES_USER=myuser'
+    volumes: 
+      - dbdata:/var/lib/postgresql/data
+      - ./springboot/init.sql:/docker-entrypoint-initdb.d/init.sql
+  pgadmin:
+    image: 'dpage/pgadmin4'
+    container_name: chunk-upload-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "admin@pg.com"
+      PGADMIN_DEFAULT_PASSWORD: "admin"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    ports:
+      - 8888:80
+  spring:
+    build: 
+      context: ./springboot/app
+      dockerfile: Dockerfile
+    container_name: chunk-upload-spring
+    command: java -jar chunk-upload-manager.jar
+    ports:
+      - 8080:8080
+    depends_on:
+      - postgres
+  angular:
+    build: 
+      context: ./angular/app
+      dockerfile: Dockerfile
+    container_name: chunk-upload-angular
+    ports:
+      - 4200:4200
+      - 49153:49153
+    depends_on:
+      - spring
+    volumes:
+      - ./angular/app:/home/app/frontend
+      - /home/app/frontend/node_modules
+    command: "ng serve --host 0.0.0.0 --poll 2000 --port 4200 --disable-host-check"
+
