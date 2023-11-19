@@ -1,25 +1,6 @@
 <h2 class="mb-4">Upload Unitário</h2>
+
 <div class="cards-wrapper">
-    <div class="card">
-        <div class="card-body">
-            <h5 class="card-title">Área de Upload</h5>
-            <div class="card-body">
-                <div class="upload-section">
-                    <form>
-                        <div class="mb-2">
-                            <label for="formFile" class="form-label">Insira o Arquivo</label>
-                            <input (change)="handleFileChange($event)" class="form-control" type="file" id="formFile">
-                        </div>
-                    </form>
-                </div>
-
-                <div>
-                    {{ lastProcessedChunk }} / {{ totalChunks }} chunks processados
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="card">
         <div class="card-body">
             <h5 class="card-title">Configurações</h5>
@@ -48,6 +29,34 @@
                                 (click)="sendFilesAutomatic()" type="button" class="btn btn-primary mx-2">Enviar Arquivo
                                 Completo</button>
                         </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">Área de Upload</h5>
+            <div class="card-body">
+                <div class="upload-section">
+                    <form>
+                        <div class="mb-2">
+                            <label for="formFile" class="form-label">Insira o Arquivo</label>
+                            <input (change)="handleFileChange($event)" class="form-control" type="file" id="formFile">
+                        </div>
+                    </form>
+                </div>
+
+                <div>
+                    {{ lastProcessedChunk }} / {{ totalChunks }} chunks processados
+                    ({{ progress }}%)
+
+                    <div class="progress mt-4">
+                        <div class="progress-bar" role="progressbar" [style.width]="progress + '%'"
+                            [attr.aria-valuenow]="progress" aria-valuemin="0" aria-valuemax="100">
+                            {{ progress }}%
+                        </div>
                     </div>
                 </div>
             </div>

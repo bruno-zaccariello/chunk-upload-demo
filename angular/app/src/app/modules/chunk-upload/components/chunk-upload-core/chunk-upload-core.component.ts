@@ -1,11 +1,9 @@
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { ChunkCallbackSuccess, ChunkHandlerServiceCall, ResponseChainReturn, ServiceChunkHandler } from '../../models/service-chunk-handler/service-chunk-handler.model';
-import { ChunkUploadRequest, ChunkUploadResponse } from '../../models/chunk-upload.model';
+import { ChunkUploadResponse } from '../../models/chunk-upload.model';
 import { ChunkUploadService } from '../../services/chunk-upload.service';
-import { ServiceChunkLotHandler as ServiceChunkLotHandler } from '../../models/service-chunk-handler/service-chunk-lot-handler.model';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'bcz-chunk-upload-core',
@@ -27,6 +25,9 @@ export class ChunkUploadCoreComponent {
   public lastProcessedChunk = 0;
   public totalChunks = 0;
 
+  public progressObserver!: Subscription;
+  public progress = 0;
+
   constructor(
     private chunkUploadService: ChunkUploadService
   ) { }
@@ -44,6 +45,9 @@ export class ChunkUploadCoreComponent {
   }
 
   hashFiles() {
+    if (!this.handler) {
+      return;
+    }
     this.handler.hashFile()
       .then((handler) => {
         this.fileHashed = true;
@@ -90,7 +94,22 @@ export class ChunkUploadCoreComponent {
     }
   }
 
+  private setupListeners() {
+    if (this.progressObserver) {
+      this.progressObserver.unsubscribe();
+    }
+
+    this.progressObserver = this.handler
+      .observeProgress()
+      .subscribe((progess) => {
+        this.lastProcessedChunk = this.handler.lastProcessedChunk;
+        this.progress = progess;
+      });
+  }
+
   private setHandler() {
+    this.progress = 0;
+    this.lastProcessedChunk = 0;
     if (this.files) {
       this.handler = new ServiceChunkHandler(
         this.files[0],
@@ -98,7 +117,7 @@ export class ChunkUploadCoreComponent {
         { mbPerChunk: this.mbPerChunk, autoIncrement: this.autoIncrement }
       );
       this.totalChunks = this.handler.totalChunks;
-      this.lastProcessedChunk = this.handler.lastProcessedChunk;
+      this.setupListeners();
     }
   }
 

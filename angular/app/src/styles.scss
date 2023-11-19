@@ -1,5 +1,7 @@
 /* You can add global styles to this file, and also import other style files */
 
+@import url(./app/modules/chunk-upload/resources/chunk-upload.styles.scss);
+
 body {
     background-color: #F0F0F0;
 }
@@ -14,4 +16,9 @@ body {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+}
+
+.main-section {
+    margin-inline: auto;
+    padding: 1rem;
 }

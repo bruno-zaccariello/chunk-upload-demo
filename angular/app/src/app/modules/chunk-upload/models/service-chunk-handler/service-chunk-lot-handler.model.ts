@@ -1,13 +1,20 @@
 import { Observable, Subject } from "rxjs";
 import { ChunkLotHandler } from "../chunk-handler/chunk-lot-handler.model";
 import { ChunkCallbackSuccess, ResponseChainReturn, ServiceChunkHandler } from "./service-chunk-handler.model";
+import { roundDecimals } from "../../../../shared/utils";
 
-export class ServiceChunkLotHandler<R> extends ChunkLotHandler<ServiceChunkHandler> {
+export class ServiceChunkLotHandler<T, R> extends ChunkLotHandler {
 
+    // File Data and Progress
     private _totalFiles!: number;
-    private _totalProcessedFiles!: number;
+    private _totalProcessedFiles: number = 0;
     private _totalProcessedFilesSubject = new Subject<number>();
 
+    private _globalProgress = 0;
+    private _globalProgressSubject = new Subject<number>();
+    private _handlersActive = new Map<string, number>();
+
+    // Internal Control
     private _parallelSendLimit = 20;
     private _parallelExecutors = new Array<ServiceChunkHandler>();
     private _currentHandlerIndex!: number;
@@ -79,9 +86,13 @@ export class ServiceChunkLotHandler<R> extends ChunkLotHandler<ServiceChunkHandl
         } while (this._currentHandlerIndex < sliceIndexEnd)
     }
 
+    public trackProgress(): Observable<number> {
+        return this._globalProgressSubject.asObservable();
+    }
+
     private async sendSlice(start: number, end: number): Promise<R[][]> {
         const handlers = this.chunkHandlers.slice(start, end);
-        const promises = handlers.map((handler) => handler.send());
+        const promises = handlers.map((handler) => handler.send(this.progressTracker.bind(this)));
         return Promise.allSettled(promises)
             .then(results => {
                 console.log(`Inclusão do Lote ${this._currentSlice} realizado com sucesso`)
@@ -104,7 +115,7 @@ export class ServiceChunkLotHandler<R> extends ChunkLotHandler<ServiceChunkHandl
             if (!nextHandler) { return Promise.resolve([]); }
             this._parallelExecutors.push(nextHandler);
             this._currentHandlerIndex++;
-            return nextHandler.send()
+            return nextHandler.send(this.progressTracker.bind(this))
                 .then(r => {
                     if (r.handler.isCompleted) {
                         this._parallelExecutors = this._parallelExecutors.filter((q) => !q.equals(r.handler));
@@ -128,5 +139,19 @@ export class ServiceChunkLotHandler<R> extends ChunkLotHandler<ServiceChunkHandl
         if (!!this.options?.lotSize && this.options.lotSize > 0) {
             this._parallelSendLimit = this.options.lotSize;
         }
+    }
+
+    private progressTracker: ChunkCallbackSuccess<R, ServiceChunkHandler> = (r, handler) => {
+        this._handlersActive.set(handler.fileName, handler.progress);
+        this.calculateProgress();
+    }
+
+    private calculateProgress(): void {
+        const progressArray = Array.from(this._handlersActive.values());
+        const accumulatedProgress = progressArray.reduce((acc, individualProgress) => acc + individualProgress, 0);
+        const globalProgress = accumulatedProgress / (this.totalFiles * 100);
+        const globalProgressPercentage = globalProgress * 100;
+        this._globalProgress = roundDecimals(globalProgressPercentage);
+        this._globalProgressSubject.next(this._globalProgress);
     }
 }

@@ -2,27 +2,6 @@
 <div class="cards-wrapper">
     <div class="card">
         <div class="card-body">
-            <h5 class="card-title">Área de Upload</h5>
-            <div class="card-body">
-                <div class="upload-section">
-                    <form>
-                        <div class="mb-2">
-                            <label for="formFile" class="form-label">Insira multiplos arquivos</label>
-                            <input (change)="handleFileChange($event)" class="form-control" type="file" multiple="true"
-                                id="formFile">
-                        </div>
-                    </form>
-                </div>
-
-                <div>
-                    {{ totalProcessed }} / {{ files?.length ?? 0}} arquivos processados
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="card-body">
             <h5 class="card-title">Configurações</h5>
             <div class="card-body">
                 <div class="data-section">
@@ -62,13 +41,45 @@
 
     <div class="card">
         <div class="card-body">
+            <h5 class="card-title">Área de Upload</h5>
+            <div class="card-body">
+                <div class="upload-section">
+                    <form>
+                        <div class="mb-2">
+                            <label for="formFile" class="form-label">Insira multiplos arquivos</label>
+                            <input (change)="handleFileChange($event)" class="form-control" type="file" multiple="true"
+                                id="formFile">
+                        </div>
+                    </form>
+                </div>
+
+                <div>
+                    {{ totalProcessed }} / {{ files?.length ?? 0}} arquivos processados
+                    ({{ progress }}%)
+
+                    <div class="progress mt-4">
+                        <div class="progress-bar" role="progressbar" [style.width]="progress + '%'"
+                            [attr.aria-valuenow]="progress" aria-valuemin="0" aria-valuemax="100">
+                            {{ progress }}%
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
             <h5 class="card-title">Hashes</h5>
             <div class="card-body">
                 <button (click)="hashFiles()" type="button" class="btn btn-secondary">Criar Hashes</button>
-                <div class="data-section">
+                <div class="data-section hashes-container">
                     <div>
                         <ul>
-                            <li *ngFor="let handler of chunkHandlers">{{ handler?.fileName }}: {{ handler?.hash }}</li>
+                            <li *ngFor="let handler of chunkHandlers">
+                                <strong>{{ handler?.fileName }}:</strong>
+                                {{ handler?.hash }}
+                            </li>
                         </ul>
                     </div>
                 </div>

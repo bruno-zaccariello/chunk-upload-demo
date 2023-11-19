@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Subject, takeUntil } from 'rxjs';
-import { ChunkUploadResponse } from '../../models/chunk-upload.model';
+import { Observable, Subject, Subscription, takeUntil } from 'rxjs';
+import { ChunkUploadRequest, ChunkUploadResponse } from '../../models/chunk-upload.model';
 import { ServiceChunkHandler, ChunkHandlerServiceCall } from '../../models/service-chunk-handler/service-chunk-handler.model';
 import { ServiceChunkLotHandler } from '../../models/service-chunk-handler/service-chunk-lot-handler.model';
 import { ChunkUploadService } from '../../services/chunk-upload.service';
@@ -17,16 +17,18 @@ export class ChunkUploadLotComponent {
 
   protected files!: File[] | null;
 
-  private lotHandler!: ServiceChunkLotHandler<ChunkUploadResponse>;
+  private lotHandler!: ServiceChunkLotHandler<ChunkUploadRequest, ChunkUploadResponse>;
   private mbPerChunk!: number;
   private lotSize!: number;
   private autoIncrement!: boolean;
 
-  private listenersFinalize = new Subject<void>();
-
   public filesHashed = false;
 
+  public processedObserver!: Subscription;
   public totalProcessed = 0;
+
+  public progressObserver!: Subscription;
+  public progress = 0;
 
   constructor(
     private chunkUploadService: ChunkUploadService
@@ -41,11 +43,13 @@ export class ChunkUploadLotComponent {
       const files = this.fileListToArray(fileList);
       this.files = files;
       this.setHandlers();
-      this.setupListeners();
     }
   }
 
   hashFiles() {
+    if (!this.lotHandler) {
+      return;
+    }
     this.lotHandler.hashFiles()
       .then((handlers) => {
         this.filesHashed = true;
@@ -87,20 +91,36 @@ export class ChunkUploadLotComponent {
   }
 
   private setupListeners() {
-    this.listenersFinalize.next();
-    this.lotHandler.observeProcessedFiles()
-      .pipe(takeUntil(this.listenersFinalize))
+    if (this.progressObserver) {
+      this.progressObserver.unsubscribe();
+    }
+
+    if (this.processedObserver) {
+      this.processedObserver.unsubscribe();
+    }
+
+    this.processedObserver = this.lotHandler.observeProcessedFiles()
       .subscribe((totalProcessed) => {
         this.totalProcessed = totalProcessed
+      });
+
+    this.progressObserver = this.lotHandler
+      .trackProgress()
+      .subscribe((progess) => {
+        this.progress = progess;
       });
   }
 
   private setHandlers() {
+    this.progress = 0;
+    this.totalProcessed = 0;
+
     if (this.files) {
       this.chunkHandlers = this.files?.map(
         (file) => new ServiceChunkHandler(file, this.sendChunk.bind(this), { mbPerChunk: this.mbPerChunk, autoIncrement: this.autoIncrement })
       );
       this.lotHandler = new ServiceChunkLotHandler(this.chunkHandlers, { lotSize: this.lotSize });
+      this.setupListeners();
     }
   }
 

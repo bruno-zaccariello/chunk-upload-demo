@@ -1,6 +1,6 @@
 import { ChunkHandler } from "./chunk-handler.model";
 
-export class ChunkLotHandler<T extends ChunkHandler> {
+export class ChunkLotHandler {
 
     private parallelHashLimit = 100;
 
