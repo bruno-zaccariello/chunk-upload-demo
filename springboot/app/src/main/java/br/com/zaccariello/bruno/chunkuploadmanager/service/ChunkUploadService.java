@@ -36,7 +36,7 @@ public class ChunkUploadService {
     @Autowired
     FileService fileService;
 
-    public ChunkUploadResponse processChunk(ChunkUploadRequest request) {
+    public ChunkUploadResponse uploadChunk(ChunkUploadRequest request) {
         ChunkResultWithFile chunkResult;
         if (request.getChunkIndex().equals(INITIAL_CHUNK)) {
             chunkResult = processNewFile(request);
@@ -64,8 +64,10 @@ public class ChunkUploadService {
             return new ChunkResultWithFile(ProcessedChunkResult.ERROR, file);
         }
 
-        ProcessedChunkResult result = fileService.createFile(request.getChunk(), request.getFileName());
+        ProcessedChunkResult result = handleNewChunk(request);
         handleIOError(file, result);
+
+        file = updateLastProcessedChunk(result, file, request.getChunkIndex());
 
         return new ChunkResultWithFile(result, file);
     }
@@ -88,14 +90,31 @@ public class ChunkUploadService {
             return new ChunkResultWithFile(ProcessedChunkResult.ERROR, file);
         }
 
-        ProcessedChunkResult result = fileService.appendChunk(request.getChunk(), request.getFileName());
+        ProcessedChunkResult result = fileService.appendChunk(
+                request.getChunk(),
+                request.getFileName(),
+                request.isFinalChunk()
+        );
         handleIOError(file, result);
+
+        file = updateLastProcessedChunk(result, file, request.getChunkIndex());
 
         return new ChunkResultWithFile(result, file);
     }
 
+    private ProcessedChunkResult handleNewChunk(ChunkUploadRequest request) {
+        if (UNITY.equals(request.getTotalChunks())) {
+            return fileService.createFullFile(request.getChunk(), request.getFileName());
+        } else {
+            return fileService.newChunk(request.getChunk(), request.getFileName());
+        }
+    }
+
     private void validateChunk(ChunkUploadRequest request, ChunkFile file) throws InvalidChunkRequest {
-        Long nextChunk = file.getLastProcessedChunk() + UNITY;
+        Long nextChunk = UNITY;
+        if (file.getLastProcessedChunk() != null) {
+            nextChunk = file.getLastProcessedChunk() + UNITY;
+        }
 
         if (!request.getChunkIndex().equals(nextChunk)) {
             throw new InvalidChunkRequest(Messages.ChunkUpload.CHUNK_INDEX_MISMATCH);
@@ -124,6 +143,8 @@ public class ChunkUploadService {
         ChunkFile file = new ChunkFile();
         file.setFileName(request.getFileName());
         file.setFileHash(request.getFileHash());
+        file.setTotalChunks(request.getTotalChunks());
+        file.setTotalFileBytes(request.getFileSize());
         file.setStatus(FileUploadStatus.NOT_STARTED);
         return fileRepository.save(file);
     }
@@ -137,6 +158,14 @@ public class ChunkUploadService {
                 )
                 .stream().findFirst()
                 .orElse(null);
+    }
+
+    private ChunkFile updateLastProcessedChunk(ProcessedChunkResult result, ChunkFile file, Long chunkIndex) {
+        if (ProcessedChunkResult.SUCCESS.equals(result)) {
+            file.setLastProcessedChunk(chunkIndex);
+            return fileRepository.save(file);
+        }
+        return file;
     }
 
     private ChunkFile findFile(ChunkUploadRequest request) {

@@ -10,29 +10,29 @@ import lombok.NoArgsConstructor;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "TFILE", schema = "MYSCHEMA")
+@Table(name = "tfile")
 public class ChunkFile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "FILE_NAME", nullable = false, length = 60)
+    @Column(name = "file_name", nullable = false, length = 60)
     private String fileName;
 
-    @Column(name = "FILE_HASH", length = 40)
+    @Column(name = "file_hash", length = 40)
     private String fileHash;
 
-    @Column(name = "TOTAL_FILE_BYTES")
+    @Column(name = "file_size")
     private Long totalFileBytes;
 
-    @Column(name = "TOTAL_CHUNKS", nullable = false)
+    @Column(name = "total_chunks", nullable = false)
     private Long totalChunks;
 
-    @Column(name = "LAST_PROCESSED_CHUNK")
+    @Column(name = "last_processed_chunk")
     private Long lastProcessedChunk;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "STATUS", length = 20)
+    @Column(name = "status", length = 20)
     private FileUploadStatus status;
 }

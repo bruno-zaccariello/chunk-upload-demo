@@ -7,7 +7,8 @@ spring:
   jpa:
     properties:
       hibernate:
-        default_schema: MYSCHEMA
+        default_schema: myschema
+        dialect: org.hibernate.dialect.PostgreSQLDialect
 
 dist:
   jar: chunk-upload-manager
@@ -16,5 +17,5 @@ server:
   port: 8080
 
 output:
-  temp: ./output/temp
-  result: ./output/result
+  temp: src/output/temp
+  result: src/output/result

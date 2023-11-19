@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 @Injectable({
   providedIn: 'root'
 })
-export class ChunkUploadServiceService {
+export class ChunkUploadService {
 
   constructor(
     private http: HttpClient
@@ -18,7 +18,7 @@ export class ChunkUploadServiceService {
     Object.entries(request).forEach(([key, value]) => {
       formData.append(key, value);
     });
-    return this.http.post<ChunkUploadResponse>('localhost:8080/upload', formData);
+    return this.http.post<ChunkUploadResponse>('http://localhost:8080/chunk/upload', formData);
   }
 
 }

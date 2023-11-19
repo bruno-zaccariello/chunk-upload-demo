@@ -10,7 +10,7 @@ public class PathConfig {
     static String result;
 
     private static String changeExtension(String fileName) {
-        return fileName.substring(0, fileName.lastIndexOf(".")) + "temp";
+        return fileName.substring(0, fileName.lastIndexOf(".")) + ".temp";
     }
 
     public static String getTempPath(String fileName) {

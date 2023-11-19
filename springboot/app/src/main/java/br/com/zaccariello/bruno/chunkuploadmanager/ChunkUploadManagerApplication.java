@@ -8,8 +8,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @EnableAutoConfiguration
 public class ChunkUploadManagerApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(ChunkUploadManagerApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(ChunkUploadManagerApplication.class, args);
+    }
 
 }

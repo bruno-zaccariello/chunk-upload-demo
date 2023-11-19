@@ -1,4 +1,4 @@
-<h2 class="mb-4">Upload Unitário</h2>
+<h2 class="mb-4">Upload em Lote</h2>
 <div class="cards-wrapper">
     <div class="card">
         <div class="card-body">
@@ -7,14 +7,15 @@
                 <div class="upload-section">
                     <form>
                         <div class="mb-2">
-                            <label for="formFile" class="form-label">Insira o Arquivo</label>
-                            <input (change)="handleFileChange($event)" class="form-control" type="file" id="formFile">
+                            <label for="formFile" class="form-label">Insira multiplos arquivos</label>
+                            <input (change)="handleFileChange($event)" class="form-control" type="file" multiple="true"
+                                id="formFile">
                         </div>
                     </form>
                 </div>
 
                 <div>
-                    {{ lastProcessedChunk }} / {{ totalChunks }} chunks processados
+                    {{ totalProcessed }} / {{ files?.length ?? 0}} arquivos processados
                 </div>
             </div>
         </div>
@@ -28,25 +29,30 @@
                     <div class="container">
                         <form>
                             <div class="mb-3">
+                                <label for="loteSize" class="form-label">Tamanho do Lote</label>
+                                <input (change)="handleTamanhoLoteChange($event)" type="number" class="form-control"
+                                    id="loteSize">
+                            </div>
+                            <div class="mb-3">
                                 <label for="mbPerChunk" class="form-label">MB por Chunk</label>
                                 <input step=".01" (change)="handleMbPerChunkChange($event)" type="number"
                                     class="form-control" id="mbPerChunk">
                             </div>
-                            <div class="form-check">
+                            <!-- <div class="form-check">
                                 <input (change)="handleAutoSendChange($event)" class="form-check-input" type="checkbox"
                                     id="autoUpload">
                                 <label class="form-check-label" for="autoUpload">
                                     Envio Automático
                                 </label>
-                            </div>
+                            </div> -->
 
-                            <button *ngIf="!autoIncrement" [disabled]="!this.files" [class.disabled]="!this.files"
-                                (click)="sendFilesManual()" type="button" class="btn btn-primary mx-2">Enviar
-                                Chunk</button>
+                            <button [disabled]="!this.files" [class.disabled]="!this.files"
+                                (click)="sendFilesInSlices()" type="button" class="btn btn-primary mx-2">Enviar em
+                                Lotes</button>
 
-                            <button *ngIf="autoIncrement" [disabled]="!this.files" [class.disabled]="!this.files"
-                                (click)="sendFilesAutomatic()" type="button" class="btn btn-primary mx-2">Enviar Arquivo
-                                Completo</button>
+                            <button [disabled]="!this.files" [class.disabled]="!this.files"
+                                (click)="sendFilesInParallel()" type="button" class="btn btn-primary mx-2">Enviar
+                                Paralelo</button>
                         </form>
                     </div>
                 </div>
@@ -56,13 +62,13 @@
 
     <div class="card">
         <div class="card-body">
-            <h5 class="card-title">Hash</h5>
+            <h5 class="card-title">Hashes</h5>
             <div class="card-body">
-                <button (click)="hashFiles()" type="button" class="btn btn-secondary">Criar Hash</button>
-                <div *ngIf="files" class="data-section">
+                <button (click)="hashFiles()" type="button" class="btn btn-secondary">Criar Hashes</button>
+                <div class="data-section">
                     <div>
                         <ul>
-                            <li>{{ handler.fileName }}: {{ handler.hash }}</li>
+                            <li *ngFor="let handler of chunkHandlers">{{ handler?.fileName }}: {{ handler?.hash }}</li>
                         </ul>
                     </div>
                 </div>
